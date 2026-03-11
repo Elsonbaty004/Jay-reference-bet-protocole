@@ -44,15 +44,8 @@ capital = st.sidebar.number_input("Capital (HTG)", value=1000)
 if st.button("🔄 SYNCHRONISER & GÉNÉRER 10 COUPONS"):
     # On simule la récupération des sports que tu as demandés
     # 'soccer_usa_mls', 'basketball_nba', 'mma_mixed_martial_arts'
-    st.info("Récupération des cotes en direct... (BelParyaj Style)")
     
-    # Simulation de la liste de matchs (on pourrait la rendre dynamique via l'API)
-    matchs_a_traiter = [
-        ("Man City vs West Ham", "foot"),
-        ("NY Knicks vs Utah Jazz", "nba"),
-        ("Hero Jiujing vs LGD", "esport"),
-        ("Curtis vs Orolbay", "mma")
-    ]
+
     
     coupons_generes = []
     for i in range(10):
@@ -75,19 +68,7 @@ if st.button("🔄 SYNCHRONISER & GÉNÉRER 10 COUPONS"):
             "mise": mise
         })
 
-    # Affichage
-    cols = st.columns(2)
-    for idx, cp in enumerate(coupons_generes):
-        with cols[idx % 2]:
-            st.markdown(f"""
-            <div style="border:2px solid #4CAF50; border-radius:10px; padding:15px; margin-bottom:15px;">
-                <h4 style="color:#FFD700;">{cp['titre']} | Confiance: {cp['confiance']}/10</h4>
-                <p>1. {cp['matchs'][0][0]} -> <b>{cp['matchs'][0][1]}</b> ({cp['matchs'][0][2]})</p>
-                <p>2. {cp['matchs'][1][0]} -> <b>{cp['matchs'][1][1]}</b> ({cp['matchs'][1][2]})</p>
-                <hr>
-                <h3 style="margin:0;">Cote: {cp['cote_totale']} | MISE: {cp['mise']:.2f} HTG</h3>
-            </div>
-            """, unsafe_allow_html=True)
+  
             import streamlit as st
 import random
 
@@ -104,7 +85,7 @@ def generer_10_coupons_cibles(lignes_matchs, capital):
         selection = random.sample(lignes_matchs, min(nb_matchs, len(lignes_matchs)))
         
         fiche_matchs = []
-        cote_cumulee = 1.0
+        cote_cumulee = 5.0
         
         for m in selection:
             # Attribution des types de paris selon tes règles strictes
