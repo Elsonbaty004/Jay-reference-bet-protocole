@@ -2,10 +2,6 @@ import streamlit as st
 import requests
 import random
 
-# --- CONFIGURATION ---
-API_KEY = 'f9b92fb44e7fbd8674fac83b13975a63' # <--- METS TA CLÉ ICI
-BASE_URL = 'https://api.the-odds-api.com/v4/sports/'
-
 # --- FONCTION COEUR : GÉNÉRATION DE COMBINAISONS CIBLÉES ---
 def generer_10_coupons_cibles(lignes_matchs, capital):
     coupons_valides = []
