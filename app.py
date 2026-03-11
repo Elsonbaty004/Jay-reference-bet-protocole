@@ -1,5 +1,4 @@
 import streamlit as st
-import requests
 import random
 
 # --- FONCTION COEUR : GÉNÉRATION DE COMBINAISONS CIBLÉES ---
@@ -15,7 +14,7 @@ def generer_10_coupons_cibles(lignes_matchs, capital):
         selection = random.sample(lignes_matchs, min(nb_matchs, len(lignes_matchs)))
         
         fiche_matchs = []
-        cote_cumulee = 5.0
+        cote_cumulee = 1.0
         
         for m in selection:
             # Attribution des types de paris selon tes règles strictes
@@ -30,3 +29,4 @@ def generer_10_coupons_cibles(lignes_matchs, capital):
                 p, c = "Match Non Nul", 1.25
             else: # Foot (US, EN, DE, etc.)
                 p, c = "1ère MT: +0.5", 1.25
+            
