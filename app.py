@@ -44,30 +44,6 @@ capital = st.sidebar.number_input("Capital (HTG)", value=1000)
 if st.button("🔄 SYNCHRONISER & GÉNÉRER 10 COUPONS"):
     # On simule la récupération des sports que tu as demandés
     # 'soccer_usa_mls', 'basketball_nba', 'mma_mixed_martial_arts'
-    
-
-    
-    coupons_generes = []
-    for i in range(10):
-        # Création de combinaisons de 2 matchs
-        m1, m2 = random.sample(matchs_a_traiter, 2)
-        p1, c1 = determiner_pari_et_cote(m1[0], m1[1])
-        p2, c2 = determiner_pari_et_cote(m2[0], m2[1])
-        
-        cote_totale = round(c1 * c2, 2)
-        confiance = round(random.uniform(8.8, 9.8), 1)
-        
-        # PROTOCOLE MICHAELIS
-        mise = (capital * 0.05) if confiance >= 9.4 else (capital * 0.03)
-        
-        coupons_generes.append({
-            "titre": f"COUPON #{i+1}",
-            "matchs": [(m1[0], p1, c1), (m2[0], p2, c2)],
-            "cote_totale": cote_totale,
-            "confiance": confiance,
-            "mise": mise
-        })
-
 
 # --- FONCTION COEUR : GÉNÉRATION DE COMBINAISONS CIBLÉES ---
 def generer_10_coupons_cibles(lignes_matchs, capital):
