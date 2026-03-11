@@ -68,9 +68,6 @@ if st.button("🔄 SYNCHRONISER & GÉNÉRER 10 COUPONS"):
             "mise": mise
         })
 
-  
-            import streamlit as st
-import random
 
 # --- FONCTION COEUR : GÉNÉRATION DE COMBINAISONS CIBLÉES ---
 def generer_10_coupons_cibles(lignes_matchs, capital):
