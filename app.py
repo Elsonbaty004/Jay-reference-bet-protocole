@@ -1,150 +1,85 @@
 import streamlit as st
 import random
-import requests
-import time
 
-# --- CONFIGURATION VISUELLE MODERNE ---
-st.set_page_config(page_title="Michaelis Pro Scanner", page_icon="📈", layout="wide")
-
-# Custom CSS pour le look Premium Dark
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+# --- CONFIGURATION DU PROTOCOLE MICHAELIS ---
+def calculer_mise_michaelis(capital, niveau_confiance):
+    # Le protocole Michaelis adapte la mise selon la confiance (score /10)
+    # Plus le score est haut, plus on s'approche du plafond de 5% du capital
+    base_pct = 0.02 # 2% minimum
+    if niveau_confiance >= 9:
+        base_pct = 0.05
+    elif niveau_confiance >= 8:
+        base_pct = 0.035
     
-    html, body, [class*="css"]  {
-        font-family: 'Inter', sans-serif;
-        background-color: #050505;
-    }
+    return capital * base_pct
+
+# --- MOTEUR DE DÉCISION IA PAR CHAMPIONNAT ---
+def generer_pari_ia(match_text):
+    m = match_text.lower()
     
-    .stApp {
-        background: radial-gradient(circle at top right, #0d1b10, #050505);
-    }
+    # 1. Esport (KPL, KGP)
+    if any(x in m for x in ["kpl", "kgp", "esport"]):
+        return "🎮 Plus de 3.5 Cartes", random.uniform(8.5, 9.8)
+    
+    # 2. Foot (US, EN, DE, EU, SCO, INT)
+    elif any(x in m for x in ["foot", "soccer", "mls", "premier", "bundes", "ligue", "euro", "écossais", "international"]):
+        options = [
+            "⚽ But en 1ère mi-temps", 
+            "⚽ But en 2e mi-temps", 
+            "⚽ Pas de but dans les 10 premières minutes"
+        ]
+        return random.choice(options), random.uniform(7.8, 9.5)
+    
+    # 3. Basket (NBA)
+    elif "nba" in m or "basket" in m:
+        options = ["🏀 Victoire Directe", "🏀 Nombre total de points", "🏀 Handicap"]
+        return random.choice(options), random.uniform(8.0, 9.2)
+    
+    # 4. Hockey (NHL, WHL, OHL)
+    elif any(x in m for x in ["nhl", "whl", "ohl", "hockey"]):
+        return "🏒 Match Non Nul (12)", random.uniform(7.5, 8.8)
+    
+    # 5. MMA (UFC FN)
+    elif "ufc" in m or "mma" in m:
+        return "🥊 Plus de 0.5 Rounds", random.uniform(8.2, 9.9)
+    
+    # Par défaut
+    return "🎲 Analyse en cours...", 7.0
 
-    .main-title {
-        text-align: center;
-        color: #2ecc71;
-        font-weight: 700;
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
-    }
+# --- INTERFACE STREAMLIT ---
+st.set_page_config(page_title="MICHAELIS PRO", layout="wide")
+st.title("🟢 MICHAELIS PRO v2.0")
+st.markdown("---")
 
-    .coupon-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 20px;
-        backdrop-filter: blur(10px);
-        transition: transform 0.3s ease;
-    }
+col_input, col_stats = st.columns([2, 1])
 
-    .coupon-card:hover {
-        transform: translateY(-5px);
-        border-color: #2ecc71;
-        background: rgba(46, 204, 113, 0.05);
-    }
+with col_input:
+    matches_input = st.text_area("📋 Colle tes matchs ici (un par ligne)", height=150, 
+                                 placeholder="Ex: PSG vs Real (Foot)\nLakers vs Bulls (NBA)\nKPL Hero vs Team (KPL)")
+    capital = st.number_input("Capital disponible (HTG)", value=1000)
 
-    .note-badge {
-        background: #2ecc71;
-        color: black;
-        padding: 4px 12px;
-        border-radius: 50px;
-        font-weight: bold;
-        font-size: 0.8rem;
-    }
-
-    .mise-text {
-        font-size: 1.4rem;
-        color: #f1c40f;
-        font-weight: 700;
-        margin-top: 10px;
-    }
-
-    .match-item {
-        color: #bdc3c7;
-        font-size: 0.9rem;
-        margin: 8px 0;
-        border-left: 2px solid #2ecc71;
-        padding-left: 10px;
-    }
-
-    /* Style du bouton */
-    .stButton>button {
-        background: linear-gradient(90deg, #2ecc71, #27ae60);
-        color: white;
-        border: none;
-        padding: 15px;
-        border-radius: 12px;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- SÉCURITÉ ---
-if "auth" not in st.session_state:
-    st.session_state["auth"] = False
-
-if not st.session_state["auth"]:
-    st.markdown("<h2 style='text-align:center; color:white;'>SYSTÈME SÉCURISÉ</h2>", unsafe_allow_html=True)
-    pwd = st.text_input("Code d'accès", type="password")
-    if st.button("DÉVERROUILLER"):
-        if pwd == "soixante":
-            st.session_state["auth"] = True
-            st.rerun()
-    st.stop()
-
-# --- LOGIQUE DE DONNÉES ---
-@st.cache_data(ttl=3600)
-def fetch_matches():
-    # Simulation de données réelles (plus rapide pour l'affichage moderne)
-    leagues = ["NBA", "Premier League", "UFC", "NHL", "Ligue 1", "KPL Esport"]
-    teams = ["Lakers", "Celtics", "PSG", "Real Madrid", "Man City", "Arsenal", "T1", "Bruins", "Rangers"]
-    base = []
-    for _ in range(20):
-        t1, t2 = random.sample(teams, 2)
-        lg = random.choice(leagues)
-        base.append(f"{t1} vs {t2} ({lg})")
-    return list(set(base))
-
-# --- INTERFACE ---
-st.markdown("<h1 class='main-title'>MICHAELIS PRO</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#7f8c8d;'>Algorithme de calcul de mise & coupons Cote 5</p>", unsafe_allow_html=True)
-
-st.sidebar.markdown("### 🛠 CONFIGURATION")
-capital = st.sidebar.number_input("Capital (HTG)", value=1000, step=500)
-km = st.sidebar.slider("Rigidité Michaelis (Km)", 1, 10, 5)
-
-if 'matchs' not in st.session_state:
-    st.session_state.matchs = fetch_matches()
-
-if st.button("⚡ GÉNÉRER L'ANALYSE"):
-    with st.spinner("Analyse des cotes en temps réel..."):
-        time.sleep(1.5)
-        data = st.session_state.matchs
-        
+if st.button("🚀 GÉNÉRER L'ANALYSE PROTOCOLE"):
+    lines = [l.strip() for l in matches_input.split('\n') if "vs" in l.lower()]
+    
+    if lines:
+        st.subheader("📊 Coupons de Mise Optimisés")
         cols = st.columns(3)
-        for i in range(1, 13):
-            selection = random.sample(data, 4)
-            note = round(random.uniform(8.5, 9.9), 1)
-            # Formule Michaelis : (Vmax * Note) / (Km + Note)
-            v_max = capital * 0.25 # On autorise jusqu'à 25% du capital pour les notes élevées
-            mise = round((v_max * note) / (km + note), 2)
+        
+        for i, match in enumerate(lines):
+            pari, confiance = generer_pari_ia(match)
+            mise = calculer_mise_michaelis(capital, confiance)
             
-            with cols[(i-1)%3]:
-                match_html = "".join([f"<div class='match-item'>• {m}</div>" for m in selection])
+            with cols[i % 3]:
                 st.markdown(f"""
-                <div class="coupon-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="color:#2ecc71; font-weight:bold;">COUPON #{i}</span>
-                        <span class="note-badge">{note}/10</span>
+                <div style="border:2px solid #4CAF50; border-radius:10px; padding:15px; margin-bottom:10px; background-color:#1E1E1E;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:#888;">COUPON #{i+1}</span>
+                        <span style="background:#4CAF50; padding:2px 8px; border-radius:5px; font-size:12px;">{confiance:.1f}/10</span>
                     </div>
-                    <div class="mise-text">{mise} HTG</div>
-                    <div style="color:#7f8c8d; font-size:0.8rem; margin-bottom:15px;">Cote estimée: 5.00</div>
-                    {match_html}
+                    <h3 style="color:#FFD700; margin:10px 0;">{mise:.2f} HTG</h3>
+                    <p style="font-weight:bold; font-size:14px;">{match.upper()}</p>
+                    <p style="color:#00E5FF; font-size:15px;">➡️ {pari}</p>
                 </div>
                 """, unsafe_allow_html=True)
-
-st.sidebar.markdown("---")
-st.sidebar.caption("Version Pro 2.0 - 2026")
+    else:
+        st.warning("Veuillez entrer des matchs valides avec 'vs'.")
